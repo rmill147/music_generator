@@ -3,14 +3,8 @@ import main
 # import read_data
 import csv
 
-# for loop to do all this, take in 10 selected songs, nodes... run twice with different # of epochs take in n songs,
-# of nodes, # of epochs 10 different songs... 10 + trials each with only increasing number of notes; pick a long
-# existing song... start with just one song and record how long that takes and see TO DO : have fixed number of
-# nodes, then only change number of notes
+# TODO: in main in addition to deletion of first in song generation, need to append at the end
 
-# also, in main in addition to deletion of first in song generation, need to append at the end
-
-# Songs get specified here.... maybe something fancy here in the future but for now, just do the one long song
 
 # Variables
 copies = 200  # number of times to copy the song
@@ -18,14 +12,14 @@ window_length = 12  # number of notes used to predict the next note
 # neural network parameters
 nn_nodes = 10  # number of nodes in the RNN
 # training parameters
-epochs = 600  # number of epochs used for training (cuts off early based on loss threshold + delta)
-batch_size = None  # size of each batch (None is default)
-num_rounds = 10
+num_rounds = 1
 
-# selecting a song
-sample_file = ['samples/suite_1_prelude_Gmaj_bach.mid', 'samples/cs2-4sar.mid', 'samples/cs2-3cou.mid',
-               'samples/cs2-4sar.mid', 'samples/cs2-2all.mid', 'samples/cs2-1pre.mid', 'samples/cs1-6gig.mid',
-               'samples/cs1-5men.mid', 'samples/cs1-4sar.mid', 'samples/cs1-3cou.mid', 'samples/cs1-2all.mid']
+# selecting a song... add desired songs here
+# sample_file = ['samples/cs1-1pre.mid', 'samples/cs2-4sar.mid', 'samples/cs2-3cou.mid',
+               #'samples/cs2-4sar.mid', 'samples/cs2-2all.mid', 'samples/cs2-1pre.mid', 'samples/cs1-6gig.mid',
+              # 'samples/cs1-5men.mid', 'samples/cs1-4sar.mid', 'samples/cs1-3cou.mid', 'samples/cs1-2all.mid']
+
+sample_file = ['samples/cs1-1pre.mid']
 
 # Iterate over each file
 for x in range(len(sample_file)):
@@ -69,5 +63,6 @@ for x in range(len(sample_file)):
         # close the file
         f.close()
 
+        # Shorten song length
         length = length - 10
         song = main.shorten_song(midi_file, length)

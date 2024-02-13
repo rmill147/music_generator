@@ -1,28 +1,26 @@
 import random
 import numpy as np
-from matplotlib import pylab
-import matplotlib.pyplot as plt
-from sklearn.linear_model import LinearRegression
+# from matplotlib import pylab
+# import matplotlib.pyplot as plt
+# from sklearn.linear_model import LinearRegression
 from keras import Sequential
 from keras.src.layers import SimpleRNN, Dense
 from numpy.matlib import repmat
 import tensorflow as tf
-import csv
-from tensorflow import keras
 import pretty_midi
 
-# dataset parameters ..... some of these need to be set/get methods
+# dataset parameters (if not using run_exp file)
 copies = 200       # number of times to copy the song
 window_length = 12  # number of notes used to predict the next note
-# neural network parameters
-nn_nodes = 10      # number of nodes in the RNN
+
 # training parameters
-epochs = 600       # number of epochs used for training (cuts off early based on loss threshold + delta)
+nn_nodes = 10      # number of nodes in the RNN
+epochs = 100       # number of epochs used for training (cuts off early based on loss threshold + delta)
 batch_size = None   # size of each batch (None is default)
-song_length = 10
+song_length = 15
 loss_threshold = 0.001
 
-# TO-DO: Generate random notes to a song and see if the RNN will memorize
+# Generate random notes to a song and see if the RNN will memorize
 def random_song_generator(notes_number):
     output = []
     possible_notes = list(range(1,127))
@@ -113,23 +111,23 @@ def dataset_from_song(song,copies,window_length):
     return x_train,y_train
 
 # selecting a song
-sample_file = 'samples/suite_1_prelude_Gmaj_bach.mid'
+sample_file = 'samples/cs1-1pre.mid'
 midi_file = midi_to_notes(sample_file)
 
 # song going in
 song = midi_file
 
-# print("Input song:")
-# print(song)
-# print("Input song length:")
-# print(len(song))
+print("Input song:")
+print(song)
+print("Input song length:")
+print(len(song))
 
 # generate a dataset from copies of the song
-#x_train,y_train = dataset_from_song(song,copies,window_length)
+x_train,y_train = dataset_from_song(song,copies,window_length)
 
 # RM: write out input song
-# out_file = 'input.mid'
-# in_pm = notes_to_midi(song, out_file=out_file)
+out_file = 'input.mid'
+in_pm = notes_to_midi(song, out_file=out_file)
 
 
 def make_and_train(x_train,y_train):
@@ -138,12 +136,11 @@ def make_and_train(x_train,y_train):
     model = Sequential()
     model.add(SimpleRNN(nn_nodes,activation='relu'))
     model.add(Dense(1, activation=None))
-
     # set up the neural network
     model.compile(
         loss='MeanSquaredError',
         optimizer='Adam',
-        metrics=[])
+        metrics=None)
     # use this to save the best weights found so far
     # AC: can we set this so that the loss has to be less than 0.001
     callback = tf.keras.callbacks.EarlyStopping(monitor='loss',min_delta=0.0001, patience=50,restore_best_weights=True)
@@ -166,8 +163,9 @@ def make_and_train(x_train,y_train):
     return model
 
 
-#model = make_and_train()
-# shift the scale up by 2 half steps
+model = make_and_train(x_train, y_train)
+
+# shift the scale up by half steps
 test_song = song
 print("Test song:")
 print(test_song)
@@ -177,9 +175,9 @@ print(len(test_song))
 #copies_test = round((float(song_length) + 12.0)/float(len(test_song)))
 copies_test = 3
 
-# reverse the scale
+# reverse the scale (if you want)
 # test_song = song[-1::-1]
-# RM copies has effect on output; each time you add a copy
+
 def do_test(model,test_song):
     x_test,y_test = dataset_from_song(test_song,copies_test,window_length)
 
@@ -192,76 +190,65 @@ def do_test(model,test_song):
     correct = sum(predictions == y_test)
     N = len(predictions)
     test_accuracy = (correct/N)
-    print(f"\nTest set accuracy: {100*correct/N}! ({correct}/{N})")
+    print(f"\nTest set accuracy: {100*correct/N}% ({correct}/{N})")
     #print(" test set accuracy: %.4f%% (%d/%d)" % (100*correct/N,correct,N))
 
     return pred_list, test_accuracy
 
 
-#pred_list, test_accuracy = do_test(model)
+pred_list, test_accuracy = do_test(model, test_song)
 
-# RM: write out output song
+# Write out output song
 
-# out_file2 = 'output.mid'
-# out_pm = notes_to_midi(pred_list, out_file=out_file2)
-#
-# print("Output song: ")
-# print(pred_list)
+out_file2 = 'output.mid'
+out_pm = notes_to_midi(pred_list, out_file=out_file2)
 
-# # 1: Plot Notes:nodes-> (x-axis)/accuracy -> (y-axis) -> for the memorization problem... maybe write out to csv file
-# def plot(notes,nodes,accuracy,color="red"):
-#     x = notes/nodes
-#     y = accuracy
-#
-#     plt.scatter(x,y,color=color)
-#     pylab.xlabel('notes/nodes')
-#     pylab.ylabel('accuracy')
-#     plt.show()
-#
-# ratio = len(song)/nn_nodes
-# header = ['Notes','Nodes','Ratio','Accuracy']
-# data = [len(song), nn_nodes, ratio, float(test_accuracy)]
-# print(data)
-#
-#
-# # open the file in the write mode
-# f = open('data.csv', 'a', newline='')
-# writer = csv.writer(f)
-#
-# # write a row to the csv file
-# writer.writerow(data)
-#
-# # close the file
-# f.close()
+print("Output song: ")
+print(pred_list)
 
-# plot data
-#plot(len(song),nn_nodes,test_accuracy)
+# 2. TODO: Generate a song ... can it learn a pattern to make a song?
+def predict_notes(pred_list):
+    pred_list_c = np.asarray(pred_list)
+    pred_list_c = np.reshape(pred_list_c, (1, 1767, 1))
 
-# 2. TO-DO: Generate a song ... can it learn a pattern to make a song?
-# def predict_notes(song_length,x_train,song):
-#     inputs = x_train
-#
-#     predictions = model.predict(inputs).round()
-#
-#     pitch = predictions[0]
-#
-#     return int(pitch)
-#
-# generated_song = [None] * len(pred_list)
-# for i in range(0, len(pred_list)):
-#     generated_song[i] = pred_list[i]
-#
-# for _ in range(song_length):
+    predictions = model.predict(pred_list_c).round()
+
+    pitch = predictions[0]
+    print("Guessed pitch")
+    print(pitch)
+
+    return int(pitch)
+
+
+generated_song = []
+
+# copy over existing predictions from pred_list
+for i in range(0, len(pred_list)):
+    generated_song.append(pred_list[i])
+    # generated_song[i] = pred_list[i]
+
+# Add/predict specified number of notes after
+for x in range(song_length):
 #     note = predict_notes(song_length,x_train, pred_list)
-#     generated_song.append(note)
-#     x_train = np.delete(x_train,0,axis=0)
-#
-#
-# out_file3 = 'output_generation.mid'
-# out_pm = notes_to_midi(generated_song, out_file=out_file3)
-#
-# print("generated song")
-# print(generated_song)
+    note = predict_notes(pred_list)
+    generated_song.append(note)
+    # I want to update the pred list so that the first note is moved from spot 0 to the back.
+    selected = pred_list[0]
+    pred_list = np.append(pred_list, selected)
+    pred_list = np.delete(pred_list, 0)
+
+
+#     x_zero = x_train[0]
+#     x_train = np.delete(x_train, 0, axis=0)
+#     x_train = np.append(x_train, x_zero)
+#     print("xtrain final?")
+#     print(x_train)
+
+out_file3 = 'output_generation.mid'
+out_pm = notes_to_midi(generated_song, out_file=out_file3)
+
+print("generated song")
+print(generated_song)
 
 
 
