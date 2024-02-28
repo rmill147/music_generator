@@ -16,45 +16,6 @@ batch_size = None   # size of each batch (None is default)
 song_length = 15
 loss_threshold = 0.001
 
-
-# My attempt at fixing circular import issues...
-class Generator:
-    def __init__(self, copies=0):
-        self._copies = int(copies)
-
-        # getter method
-    def get_copies(self):
-        return int(self._copies)
-        print(f"copies: {copies}")
-        print(type(copies))
-
-        # setter method
-    def set_copies(self, x):
-        self._copies = x
-
-    def __init__(self, num_nodes=0):
-        self._num_nodes = num_nodes
-
-        # getter method
-    def get_num_nodes(self):
-        return self._num_nodes
-
-        # setter method
-    def set_num_nodes(self, x):
-        self._num_nodes = x
-
-    def __init__(self, epoch_num=0):
-        self._epoch_num = epoch_num
-
-        # getter method
-    def get_epoch_num(self):
-        return self._epoch_num
-
-        # setter method
-    def set_epoch_num(self, x):
-        self._epoch_num = x
-
-
 # Generate random notes to a song and see if the RNN will memorize
 def random_song_generator(notes_number):
     output = []
